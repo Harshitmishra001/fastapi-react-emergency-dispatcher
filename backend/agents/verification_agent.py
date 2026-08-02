@@ -14,15 +14,22 @@ class VerificationAgent:
             try:
                 from sentence_transformers import SentenceTransformer
                 self.model = SentenceTransformer('all-MiniLM-L6-v2')
-            except ImportError:
-                # Fallback if not installed
+            except Exception as e:
+                # Fallback if not installed or network fails
+                print(f"Warning: SentenceTransformer failed to load ({e}). Using difflib fallback.")
+                import difflib
                 class DummyModel:
                     def encode(self, texts):
-                        return np.random.rand(len(texts), 384)
+                        # We will handle string comparison directly in compute_similarity for DummyModel
+                        return texts
                 self.model = DummyModel()
         return self.model
 
     def _compute_similarity(self, vec1, vec2) -> float:
+        if isinstance(vec1, str) and isinstance(vec2, str):
+            import difflib
+            return difflib.SequenceMatcher(None, vec1, vec2).ratio()
+            
         from numpy.linalg import norm
         if norm(vec1) == 0 or norm(vec2) == 0:
             return 0.0
