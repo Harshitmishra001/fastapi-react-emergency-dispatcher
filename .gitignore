@@ -33,3 +33,6 @@ dist-ssr/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Project Docs
+disaster-resource-coordinator-spec.md
