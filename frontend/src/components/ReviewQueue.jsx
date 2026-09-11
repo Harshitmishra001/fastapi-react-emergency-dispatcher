@@ -1,37 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import client from '../api/client';
 
 const ReviewQueue = () => {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock fetching queue for now
   useEffect(() => {
-    setTimeout(() => {
-      setQueue([
-        {
-          need_id: 'need-123',
-          raw_text: 'Send 50 blankets to the main shelter on 5th st',
-          urgency: 'HIGH',
-          confidence: 0.3, // low confidence triggered review
-          extracted_type: 'SHELTER_SUPPLIES',
-        },
-        {
-          need_id: 'need-456',
-          raw_text: 'I think we need medical kits here but not sure',
-          urgency: 'MEDIUM',
-          confidence: 0.1,
-          extracted_type: 'MEDICAL',
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleAction = (id, action) => {
-    // Optimistic update
+  const fetchQueue = async () => {
+    try {
+      const response = await client.get('/review/queue');
+      setQueue(response.data.queue || []);
+    } catch (err) {
+      console.error('Error fetching review queue:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (id, action) => {
     setQueue(prev => prev.filter(item => item.need_id !== id));
-    // In real app, call API POST /review/{id}
-    console.log(`Action ${action} for need ${id}`);
+    
+    try {
+      await client.post(`/review/${id}`, { action });
+    } catch (err) {
+      console.error('Error submitting review action:', err);
+      fetchQueue();
+    }
   };
 
   if (loading) {
@@ -65,23 +64,26 @@ const ReviewQueue = () => {
                   item.urgency === 'CRITICAL' ? 'bg-red-500/20 text-red-400' : 
                   item.urgency === 'HIGH' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-400'
                 }`}>
-                  {item.urgency}
+                  {item.urgency || 'UNKNOWN'}
                 </span>
               </div>
               
               <div className="mb-4">
                 <p className="text-gray-200 font-medium italic border-l-4 border-gray-600 pl-3 py-1">
-                  "{item.raw_text}"
+                  Related Reports: {item.source_report_ids?.join(', ')}
+                </p>
+                <p className="text-gray-300 mt-2 text-sm">
+                  Requested: {item.quantity_estimate} units
                 </p>
               </div>
               
               <div className="flex items-center gap-4 text-sm text-gray-400 mb-5">
                 <div className="flex items-center gap-1">
-                  <span className="font-semibold text-gray-300">Extracted:</span> {item.extracted_type}
+                  <span className="font-semibold text-gray-300">Extracted:</span> {item.need_type}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-gray-300">Confidence:</span> 
-                  <span className="text-red-400">{(item.confidence * 100).toFixed(0)}%</span>
+                  <span className="text-red-400">{item.extraction_confidence ? (item.extraction_confidence * 100).toFixed(0) : 0}%</span>
                 </div>
               </div>
               

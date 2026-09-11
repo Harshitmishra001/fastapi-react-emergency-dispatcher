@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 @layer base {
   body {
     @apply bg-gray-950 text-gray-100 antialiased selection:bg-blue-500/30;

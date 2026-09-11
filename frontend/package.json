@@ -10,8 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.20.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.45.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
