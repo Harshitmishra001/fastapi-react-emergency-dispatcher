@@ -1,24 +1,37 @@
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.routes import router
-from backend.db.models import init_db
 
-app = FastAPI(title="Disaster Resource Coordinator API")
+from backend.api.routes import router
+from backend.security.auth import auth_router
+from backend.db.models import init_db
+from backend.config.settings import settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: init DB. Shutdown: nothing extra needed for SQLite."""
+    init_db()
+    yield
+
+
+app = FastAPI(title="Disaster Resource Coordinator API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In prod, lock this down
+    allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Auth router provides POST /token
+app.include_router(auth_router)
+# Main API router
 app.include_router(router)
 
-@app.on_event("startup")
-def on_startup():
-    init_db()
 
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+

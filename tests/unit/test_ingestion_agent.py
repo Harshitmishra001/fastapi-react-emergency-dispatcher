@@ -30,7 +30,8 @@ def test_ingestion_agent_regex_fallback(agent):
     assert result.need_type == NeedType.MEDICAL # Caught by 'injured' or 'doctor'
     assert result.quantity_estimate == 5
     assert result.stated_urgency == UrgencyLevel.CRITICAL # Caught by 'immediately'
-    assert result.extraction_confidence == 0.0 # Regex fallback forces 0.0
+    # Regex fallback starts at 0.2 confidence and maxes at 0.9; never 0.0
+    assert 0.0 < result.extraction_confidence < 1.0
     
 def test_ingestion_agent_llm_success(agent):
     class MockLLMExtraction:

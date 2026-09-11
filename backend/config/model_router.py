@@ -1,35 +1,21 @@
 from langchain_openai import ChatOpenAI
 from typing import Literal
+from backend.config.settings import settings
 
 ModelTier = Literal["local", "strong"]
 
 def get_llm(tier: ModelTier, temperature: float = 0.0) -> ChatOpenAI:
     """
     Model selection factory that resolves the LLM by tier.
-    Currently, both tiers point to the local LM Studio instance running smollm3-3b.
-    The 'strong' tier can be repointed to a more capable model in the future without changing agent code.
+    Both tiers use the same LM Studio endpoint for now.
+    The 'strong' tier is isolated so it can be repointed to a better model
+    without changing any agent code — just update LM_STUDIO_MODEL in .env.
+    # ponytail: both tiers same model, split when a real strong-tier is added
     """
-    
-    # LM Studio default configuration
-    base_url = "http://10.90.216.24:1234/v1"
-    api_key = "lm-studio"
-    model_name = "smollm3-3b"
-    
-    if tier == "local":
-        return ChatOpenAI(
-            base_url=base_url,
-            api_key=api_key, # type: ignore
-            model=model_name,
-            temperature=temperature
-        )
-    elif tier == "strong":
-        # Evaluator Agent uses the strong tier.
-        # Currently aliased to local, but isolated for future upgrade.
-        return ChatOpenAI(
-            base_url=base_url,
-            api_key=api_key, # type: ignore
-            model=model_name,
-            temperature=temperature
-        )
-    else:
-        raise ValueError(f"Unknown model tier: {tier}")
+    return ChatOpenAI(
+        base_url=settings.LM_STUDIO_BASE_URL,
+        api_key=settings.LM_STUDIO_API_KEY,  # type: ignore
+        model=settings.LM_STUDIO_MODEL,
+        temperature=temperature
+    )
+
