@@ -8,7 +8,7 @@ This project aims to automate emergency resource dispatching by converting chaot
 
 The system employs a decoupled architecture consisting of a React frontend, a FastAPI backend, and an asynchronous LangGraph-powered AI pipeline.
 
-\\mermaid
+```mermaid
 graph TD
     subgraph Frontend [React App]
         Router[React Router]
@@ -51,9 +51,10 @@ graph TD
     end
 
     Frontend -- REST API --> Backend
-\
+```
+
 ### Architectural Positives
-- **Decoupling via Background Tasks:** The HTTP request \POST /reports\ returns immediately while the graph runs in the background, preventing timeouts.
+- **Decoupling via Background Tasks:** The HTTP request `POST /reports` returns immediately while the graph runs in the background, preventing timeouts.
 - **Graph-based Orchestration:** Using LangGraph for the pipeline enables complex state management, cyclical logic (revisions), and human-in-the-loop pauses.
 - **Optimistic UI:** The frontend leverages optimistic updates in the Review Queue for a snappier user experience.
 
