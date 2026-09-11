@@ -4,6 +4,59 @@ A multi-agent AI system that triages emergency reports, matches resources, and g
 
 This project aims to automate emergency resource dispatching by converting chaotic, unstructured disaster reports into verified, mathematically matched deployment plans, while maintaining a strict "Human-in-the-Loop" checkpoint for safety and oversight.
 
+## High-Level System Architecture
+
+The system employs a decoupled architecture consisting of a React frontend, a FastAPI backend, and an asynchronous LangGraph-powered AI pipeline.
+
+\\mermaid
+graph TD
+    subgraph Frontend [React App]
+        Router[React Router]
+        Login[Login Page]
+        Dash[Dashboard]
+        Map[LiveMap]
+        Queue[Review Queue]
+        
+        Router --> Login
+        Router --> Dash
+        Dash --> Map
+        Dash --> Queue
+    end
+
+    subgraph Backend [FastAPI Server]
+        API[API Router]
+        Auth[Auth Service]
+        DB[(SQLite DB)]
+        
+        API <--> Auth
+        API <--> DB
+        
+        subgraph Pipeline [LangGraph AI Pipeline]
+            Ingest[Ingestion Agent]
+            Verify[Verification Agent]
+            Match[Resource Matcher]
+            Synth[Plan Synthesizer]
+            Eval[Evaluator Agent]
+            
+            Ingest --> Verify
+            Verify -->|Human Review Needed?| HumanWait[Wait for POST /review]
+            Verify -->|Auto-Pass| Match
+            HumanWait --> Match
+            Match --> Synth
+            Synth --> Eval
+        end
+        
+        API -.->|Background Task| Pipeline
+        Pipeline <--> DB
+    end
+
+    Frontend -- REST API --> Backend
+\
+### Architectural Positives
+- **Decoupling via Background Tasks:** The HTTP request \POST /reports\ returns immediately while the graph runs in the background, preventing timeouts.
+- **Graph-based Orchestration:** Using LangGraph for the pipeline enables complex state management, cyclical logic (revisions), and human-in-the-loop pauses.
+- **Optimistic UI:** The frontend leverages optimistic updates in the Review Queue for a snappier user experience.
+
 ## 🧠 LangGraph AI Pipeline Architecture
 
 The intelligence of the system is distributed across five specialized agents, orchestrated by LangGraph. Below is the state machine flow showing how a raw message travels through the system.
