@@ -58,6 +58,43 @@ graph TD
 - **Graph-based Orchestration:** Using LangGraph for the pipeline enables complex state management, cyclical logic (revisions), and human-in-the-loop pauses.
 - **Optimistic UI:** The frontend leverages optimistic updates in the Review Queue for a snappier user experience.
 
+
+## System Interaction Flow
+
+This sequence diagram illustrates how the asynchronous human-in-the-loop flow operates across the components:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant FastAPI
+    participant LangGraph
+    participant DB
+
+    User->>Frontend: Submit Report
+    Frontend->>FastAPI: POST /reports
+    FastAPI->>DB: Save RawReport
+    FastAPI->>LangGraph: _run_graph (Background)
+    FastAPI-->>Frontend: 202 Accepted (report_id)
+    
+    Note over LangGraph: Ingestion & Verification<br/>extracts and embeddings
+    LangGraph->>DB: Save VerifiedNeed (needs_review=True)
+    LangGraph->>LangGraph: PAUSE (Interrupt)
+    
+    Frontend->>FastAPI: GET /review/queue
+    FastAPI->>DB: Fetch pending needs
+    FastAPI-->>Frontend: Returns Queue
+    
+    User->>Frontend: Clicks "Approve"
+    Frontend->>FastAPI: POST /review/{need_id}
+    FastAPI->>DB: Update needs_review=False
+    FastAPI->>LangGraph: _resume(thread_id)
+    FastAPI-->>Frontend: 200 OK
+    
+    Note over LangGraph: Matcher, Synthesizer, Evaluator run
+    LangGraph->>DB: Save DispatchPlan
+```
+
 ## 🧠 LangGraph AI Pipeline Architecture
 
 The intelligence of the system is distributed across five specialized agents, orchestrated by LangGraph. Below is the state machine flow showing how a raw message travels through the system.
