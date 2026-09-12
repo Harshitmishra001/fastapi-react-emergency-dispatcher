@@ -220,14 +220,16 @@ async def get_report_status(
     }
 
 
-@router.get("/review/queue")
+@router.get("/needs/pending-review")
 async def get_review_queue(
+    limit: int = 50,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_reviewer),
 ):
     rows = db.query(DBVerifiedNeed).filter(
         DBVerifiedNeed.requires_human_review == True
-    ).all()
+    ).offset(offset).limit(limit).all()
     return {"queue": [
         {
             "need_id": r.need_id,
@@ -241,7 +243,7 @@ async def get_review_queue(
     ]}
 
 
-@router.post("/review/{need_id}")
+@router.post("/needs/{need_id}/review")
 async def review_need(
     need_id: str,
     body: ReviewAction,
@@ -286,10 +288,12 @@ async def review_need(
 
 @router.get("/resources")
 async def get_resources(
+    limit: int = 100,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_admin),
 ):
-    rows = db.query(DBResource).all()
+    rows = db.query(DBResource).offset(offset).limit(limit).all()
     return {"resources": [
         {
             "resource_id": r.resource_id,

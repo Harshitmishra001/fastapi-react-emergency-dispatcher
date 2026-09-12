@@ -20,7 +20,7 @@ export default function Login() {
       params.append('username', username);
       params.append('password', password);
 
-      const response = await client.post('/token', params, {
+      const response = await client.post('/auth/token', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 

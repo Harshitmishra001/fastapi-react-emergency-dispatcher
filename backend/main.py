@@ -26,10 +26,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health", tags=["health"])
+async def root_health():
+    """Un-versioned health check for load balancers."""
+    from datetime import datetime, timezone
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 # Auth router provides POST /token
-app.include_router(auth_router)
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 # Main API router
-app.include_router(router)
+app.include_router(router, prefix="/api/v1")
 
 
 if __name__ == "__main__":

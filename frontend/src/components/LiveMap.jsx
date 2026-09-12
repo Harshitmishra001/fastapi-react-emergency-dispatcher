@@ -43,9 +43,9 @@ const LiveMap = () => {
     try {
       const [resReq, queueReq] = await Promise.all([
         client.get('/resources'),
-        client.get('/review/queue')
+        client.get('/needs/pending-review')
       ]);
-      setResources(resReq.data || []);
+      setResources(resReq.data.resources || []);
       setQueue(queueReq.data.queue || []);
     } catch (err) {
       console.error('Error fetching map data', err);

@@ -13,7 +13,7 @@ const ReviewQueue = () => {
 
   const fetchQueue = async () => {
     try {
-      const response = await client.get('/review/queue');
+      const response = await client.get('/needs/pending-review');
       setQueue(response.data.queue || []);
     } catch (err) {
       console.error('Error fetching review queue:', err);
@@ -26,7 +26,7 @@ const ReviewQueue = () => {
     setQueue(prev => prev.filter(item => item.need_id !== id));
     
     try {
-      await client.post(`/review/${id}`, { action });
+      await client.post(`/needs/${id}/review`, { action });
     } catch (err) {
       console.error('Error submitting review action:', err);
       fetchQueue();

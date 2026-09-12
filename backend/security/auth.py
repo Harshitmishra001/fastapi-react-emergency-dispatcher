@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from backend.config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
 # ponytail: in-memory user store — swap for DBUser query when a users table exists
 # Passwords are bcrypt hashes. Generate with: pwd_context.hash("your_password")
