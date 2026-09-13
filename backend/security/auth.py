@@ -4,26 +4,22 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+from backend.db.models import DBUser, SessionLocal
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 from backend.config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
-# ponytail: in-memory user store — swap for DBUser query when a users table exists
-# Passwords are bcrypt hashes. Generate with: pwd_context.hash("your_password")
-fake_users_db = {
-    "alice": {
-        "username": "alice",
-        "hashed_password": pwd_context.hash("reviewer_pass"),
-        "role": "reviewer",
-    },
-    "bob": {
-        "username": "bob",
-        "hashed_password": pwd_context.hash("admin_pass"),
-        "role": "admin",
-    },
-}
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -35,7 +31,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -49,10 +45,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise exc
     except JWTError:
         raise exc
-    user = fake_users_db.get(username)
+    user = db.query(DBUser).filter(DBUser.username == username).first()
     if user is None:
         raise exc
-    return user
+    return {"username": user.username, "role": user.role}
 
 
 async def get_current_reviewer(current_user: dict = Depends(get_current_user)):
@@ -71,13 +67,13 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)):
 auth_router = APIRouter()
 
 @auth_router.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = fake_users_db.get(form_data.username)
-    if not user or not pwd_context.verify(form_data.password, user["hashed_password"]):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.username == form_data.username).first()
+    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
         )
-    token = create_access_token({"sub": user["username"], "role": user["role"]})
+    token = create_access_token({"sub": user.username, "role": user.role})
     return {"access_token": token, "token_type": "bearer"}
 

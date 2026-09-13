@@ -58,6 +58,13 @@ class DBDispatchPlan(Base):
     passed = Column(Boolean, default=False)
     rationale = Column(String, nullable=True)
 
+class DBUser(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, default="reviewer")
+
 # We use the main database URL for simplicity in dev, though the spec
 # mentions privilege separation between ingestion and dispatch.
 # In a real deployed setup, we would configure separate engines with separate roles.
@@ -68,3 +75,16 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    db = SessionLocal()
+    try:
+        if not db.query(DBUser).filter(DBUser.username == "alice").first():
+            db.add(DBUser(
+                username="alice",
+                hashed_password=pwd_context.hash("reviewer_pass"),
+                role="reviewer"
+            ))
+            db.commit()
+    finally:
+        db.close()
