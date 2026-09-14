@@ -12,13 +12,15 @@ def agent():
     # Mock the embedding model to return predictable vectors
     class MockModel:
         def encode(self, texts):
-            # For testing: if texts contain 'Main St', return [1,0], else [0,1]
+            import numpy as np
             vecs = []
             for t in texts:
+                vec = np.zeros(384)
                 if 'Main St' in t:
-                    vecs.append(np.array([1.0, 0.0]))
+                    vec[0] = 1.0
                 else:
-                    vecs.append(np.array([0.0, 1.0]))
+                    vec[1] = 1.0
+                vecs.append(vec)
             return vecs
             
     agent.model = MockModel()
@@ -58,6 +60,8 @@ def test_verification_agent_dedup(agent):
         verification_confidence=0.9,
         requires_human_review=False
     )
+    
+    agent._get_vdb().upsert_need(existing, agent.model.encode([f"{existing.location_text} {existing.need_type.value}"])[0])
     
     result = agent.process(extracted, [existing])
     assert result.requires_human_review is False
