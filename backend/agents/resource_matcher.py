@@ -1,4 +1,5 @@
 import math
+import pulp
 from typing import List
 from langchain_core.prompts import ChatPromptTemplate
 from backend.schemas.models import VerifiedNeed, ResourceRecord, Allocation, UrgencyLevel
@@ -32,59 +33,91 @@ Respond with EXACTLY the need_id of the preferred location. No other text."""),
 
     def _urgency_weight(self, urgency: UrgencyLevel) -> int:
         weights = {
-            UrgencyLevel.CRITICAL: 4,
-            UrgencyLevel.HIGH: 3,
-            UrgencyLevel.MODERATE: 2,
-            UrgencyLevel.LOW: 1
+            UrgencyLevel.CRITICAL: 4000,
+            UrgencyLevel.HIGH: 3000,
+            UrgencyLevel.MODERATE: 2000,
+            UrgencyLevel.LOW: 1000
         }
-        return weights.get(urgency, 1)
+        return weights.get(urgency, 1000)
 
     def process(self, needs: List[VerifiedNeed], resources: List[ResourceRecord]) -> List[Allocation]:
-        # For Phase 2, we implement the Greedy Fallback method.
-        # ILP optimization will be swapped in later if needed.
-        
         allocations = []
         
-        # Sort needs by urgency descending
-        sorted_needs = sorted(needs, key=lambda n: self._urgency_weight(n.urgency), reverse=True)
-        
-        # Keep track of available quantities
         available_resources = {r.resource_id: r for r in resources if r.status == "available" and r.quantity_available > 0}
+        active_needs = [n for n in needs if n.quantity_estimate > 0]
         
-        for need in sorted_needs:
-            needed_qty = need.quantity_estimate
-            if needed_qty <= 0:
-                continue
-                
-            # Filter resources by type
-            matching_resources = [r for r in available_resources.values() if r.resource_type == need.need_type]
+        if not available_resources or not active_needs:
+            return []
             
-            # Sort resources by distance
-            matching_resources.sort(key=lambda r: haversine_distance(need.coordinates, r.location))
-            
-            # Allocate greedily
-            for res in matching_resources:
-                if needed_qty <= 0:
-                    break
+        prob = pulp.LpProblem("Disaster_Resource_Allocation", pulp.LpMaximize)
+        
+        # Variables: x[need_id][res_id] = integer quantity allocated
+        x_vars = {}
+        for n in active_needs:
+            x_vars[n.need_id] = {}
+            for r in available_resources.values():
+                if r.resource_type == n.need_type:
+                    # Create integer variable bounded by 0 and min(need, available)
+                    upper = min(n.quantity_estimate, r.quantity_available)
+                    x_vars[n.need_id][r.resource_id] = pulp.LpVariable(
+                        f"x_{n.need_id}_{r.resource_id}", 
+                        lowBound=0, 
+                        upBound=upper, 
+                        cat=pulp.LpInteger
+                    )
+
+        # Objective function: maximize (urgency * 1000 - distance) * quantity
+        objective_terms = []
+        for n in active_needs:
+            for r in available_resources.values():
+                if r.resource_type == n.need_type:
+                    var = x_vars[n.need_id][r.resource_id]
+                    dist = haversine_distance(n.coordinates, r.location)
+                    urgency_w = self._urgency_weight(n.urgency)
                     
-                if res.quantity_available <= 0:
-                    continue
+                    # Base value is urgency weight. We subtract distance to prefer closer resources.
+                    # As long as distance penalty < 1000, it won't override a higher urgency category.
+                    weight = urgency_w - min(dist, 999.0)
+                    objective_terms.append(weight * var)
                     
-                # Note: Tie-breaker LLM call could be inserted here if distances are exactly equal.
-                # To keep the greedy solver fast, we rely on the stable sort for now unless explicitly requested.
-                
-                allocated_qty = min(needed_qty, res.quantity_available)
-                dist = haversine_distance(need.coordinates, res.location)
-                
-                allocations.append(Allocation(
-                    need_id=need.need_id,
-                    resource_id=res.resource_id,
-                    quantity_allocated=allocated_qty,
-                    distance_km=round(dist, 2),
-                    allocation_method="greedy_fallback"
-                ))
-                
-                res.quantity_available -= allocated_qty
-                needed_qty -= allocated_qty
-                
+        prob += pulp.lpSum(objective_terms)
+
+        # Constraints: 
+        # 1. Total allocated to each need <= quantity requested
+        for n in active_needs:
+            need_vars = []
+            for r in available_resources.values():
+                if r.resource_type == n.need_type:
+                    need_vars.append(x_vars[n.need_id][r.resource_id])
+            if need_vars:
+                prob += (pulp.lpSum(need_vars) <= n.quantity_estimate, f"NeedLimit_{n.need_id}")
+
+        # 2. Total taken from each resource <= quantity available
+        for r in available_resources.values():
+            res_vars = []
+            for n in active_needs:
+                if r.resource_type == n.need_type:
+                    res_vars.append(x_vars[n.need_id][r.resource_id])
+            if res_vars:
+                prob += (pulp.lpSum(res_vars) <= r.quantity_available, f"ResLimit_{r.resource_id}")
+
+        # Solve
+        prob.solve(pulp.PULP_CBC_CMD(msg=0))
+        
+        # Build allocations from results
+        for n in active_needs:
+            for r in available_resources.values():
+                if r.resource_type == n.need_type:
+                    var = x_vars[n.need_id][r.resource_id]
+                    if var.varValue and var.varValue > 0:
+                        alloc_qty = int(var.varValue)
+                        dist = haversine_distance(n.coordinates, r.location)
+                        allocations.append(Allocation(
+                            need_id=n.need_id,
+                            resource_id=r.resource_id,
+                            quantity_allocated=alloc_qty,
+                            distance_km=round(dist, 2),
+                            allocation_method="ilp_optimal"
+                        ))
+
         return allocations
