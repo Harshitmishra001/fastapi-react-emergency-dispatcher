@@ -102,3 +102,4 @@ websockets==15.0.1
 xxhash==3.8.1
 zstandard==0.25.0
 qdrant-client
+geopy

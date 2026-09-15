@@ -1,5 +1,8 @@
 import re
 import json
+import functools
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 from typing import Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.exceptions import OutputParserException
@@ -11,6 +14,8 @@ from backend.config.model_router import get_llm
 class IngestionAgent:
     def __init__(self):
         self.llm = get_llm("local", temperature=0.1)
+        self.geolocator = Nominatim(user_agent="disaster_coordinator_geocoder")
+
         
         # Pydantic parser setup
         # We parse an intermediate representation because ExtractedNeed requires
@@ -65,6 +70,20 @@ You must return ONLY a valid JSON object matching the requested schema. Do NOT w
         except Exception:
             return self._regex_fallback(report)
 
+
+    @functools.lru_cache(maxsize=128)
+    def _geocode_location(self, location_text: str) -> Optional[tuple[float, float]]:
+        if not location_text or len(location_text) < 4 or location_text.lower() in ["unknown", "here", "help", "unknown (regex fallback)"]:
+            return None
+        try:
+            # We don't want to spam or block forever
+            location = self.geolocator.geocode(location_text, timeout=3)
+            if location:
+                return (location.latitude, location.longitude)
+        except Exception:
+            pass
+        return None
+
     def _build_extracted_need(self, report: RawReport, llm_result, confidence: float) -> ExtractedNeed:
         # Simple heuristic check: if location is missing or generic, lower confidence
         if len(llm_result.location_text) < 4 or llm_result.location_text.lower() in ["unknown", "here", "help"]:
@@ -73,7 +92,7 @@ You must return ONLY a valid JSON object matching the requested schema. Do NOT w
         return ExtractedNeed(
             report_id=report.report_id,
             location_text=llm_result.location_text,
-            coordinates=None, # Coordinates require geocoding, left None for now
+            coordinates=self._geocode_location(llm_result.location_text),
             need_type=llm_result.need_type,
             quantity_estimate=llm_result.quantity_estimate,
             stated_urgency=llm_result.stated_urgency,
@@ -130,7 +149,7 @@ You must return ONLY a valid JSON object matching the requested schema. Do NOT w
         return ExtractedNeed(
             report_id=report.report_id,
             location_text=location,
-            coordinates=None,
+            coordinates=self._geocode_location(location),
             need_type=need,
             quantity_estimate=qty,
             stated_urgency=urgency,

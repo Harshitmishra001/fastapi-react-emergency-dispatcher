@@ -1,20 +1,20 @@
-# Gates: Vector Database Integration
+# Gates: Real Geocoding Integration
 
-OWNS: backend/db/vector_store.py, backend/agents/verification_agent.py
+OWNS: backend/agents/ingestion_agent.py
 
-Scope: Replace NumPy-based O(N) duplicate search with a Vector Database (Qdrant) to support persistence and scale.
+Scope: Implement geocoding for extracted locations to populate coordinates using geopy and Nominatim.
 
-- [x] G1: qdrant-client is installed and in requirements.txt
-  CHECK: .venv\\Scripts\\python -c "import qdrant_client; print('qdrant_client found')"
-  EXPECT: qdrant_client found
-  EVIDENCE: automatic-evidence=v1; definition-sha256=9b6cf034021f862ce8e09c989c1f111a60a56704bca66c6d5b13ed1378cea7d4; exit=0; EXPECT=matched; output-sha256=f5d90cfdb7085a8fb1e78d9f24c78bce727173463e7b15c081ed667f08818a50; output-bytes=21; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G1: geopy is installed and in requirements.txt
+  CHECK: .venv\Scripts\python -c "import geopy; print('geopy found')"
+  EXPECT: geopy found
+  EVIDENCE: automatic-evidence=v1; definition-sha256=851c57065a1f599ec8fc292e432f7f4a2582cc66f8decebae2106f498c6ab07d; exit=0; EXPECT=matched; output-sha256=6f3d9c03dcc84d184697a3813f93e212affb564967f4072c982594615f2d86e9; output-bytes=13; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
 
-- [x] G2: VerificationAgent uses vector store instead of numpy
-  CHECK: .venv\\Scripts\\python -c "f = open('backend/agents/verification_agent.py').read(); print('clean' if 'numpy' not in f else 'found')"
-  EXPECT: clean
-  EVIDENCE: automatic-evidence=v1; definition-sha256=47374fc1c123b81a76deeb98ebd26b3d0f16430ac97bc38f61339f902b80aa97; exit=0; EXPECT=matched; output-sha256=bf9b5d9576f23812d3a58c66a57a3fd7616cb25fd90538cbca5bd8b761f6c5fb; output-bytes=7; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G2: ingestion_agent uses Nominatim to resolve coordinates
+  CHECK: .venv\Scripts\python -c "f = open('backend/agents/ingestion_agent.py').read(); print('nominatim' if 'Nominatim' in f else 'missing')"
+  EXPECT: nominatim
+  EVIDENCE: automatic-evidence=v1; definition-sha256=d7930e401b3c2f76f38d438e1e126092451270ab5d098ca44a58f2c9154eb29a; exit=0; EXPECT=matched; output-sha256=e43a85f357025ca7b0f92de706a02899cd838fe9ccbffc6f5d7a71e75dab26cd; output-bytes=11; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
 
-- [x] G3: Vector deduplication successfully returns a match above threshold
-  CHECK: .venv\Scripts\python -c "import shutil; shutil.rmtree('qdrant_data', ignore_errors=True); from backend.agents.verification_agent import VerificationAgent; from backend.schemas.models import ExtractedNeed, VerifiedNeed; agent = VerificationAgent(); n1 = VerifiedNeed(need_id='n1', need_type='water', location_text='123 Main St', source_report_ids=[], quantity_estimate=10, urgency='high', verification_confidence=0.9, requires_human_review=False); agent._get_vdb().upsert_need(n1, agent._get_model().encode('123 Main St water')); ext = ExtractedNeed(report_id='r2', need_type='water', location_text='123 Main St', quantity_estimate=5, stated_urgency='high', extraction_confidence=0.9); res = agent.process(ext, [n1]); print('Matched' if res.duplicate_of == 'n1' else 'No match')"
-  EXPECT: Matched
-  EVIDENCE: automatic-evidence=v1; definition-sha256=82f170e45204db6d69010ba3925dcdce8a4d96348a17e88fcd18268bccfede2c; exit=0; EXPECT=matched; output-sha256=2aaff913f0a7ee329ad4830abb2d47edd15e664f295d8321932e8aa7da6be52a; output-bytes=962; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G3: Ingestion agent successfully fetches real coordinates for 'New York, NY'
+  CHECK: .venv\Scripts\python -c "from backend.agents.ingestion_agent import IngestionAgent; print('HasCoords' if IngestionAgent()._geocode_location('New York, NY') is not None else 'NoCoords')"
+  EXPECT: HasCoords
+  EVIDENCE: automatic-evidence=v1; definition-sha256=9d87c1fa0d1988430b223e7673fd44da4d105bf526da28f969dcfe5493db75ae; exit=0; EXPECT=matched; output-sha256=bca124005e9712d6228750b7d615a4f8ad510ae327125168338abf10bd4d32f0; output-bytes=11; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
