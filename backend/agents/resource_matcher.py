@@ -40,7 +40,7 @@ Respond with EXACTLY the need_id of the preferred location. No other text."""),
         }
         return weights.get(urgency, 1000)
 
-    def process(self, needs: List[VerifiedNeed], resources: List[ResourceRecord]) -> List[Allocation]:
+    def process(self, needs: List[VerifiedNeed], resources: List[ResourceRecord], revision_notes: str = None) -> List[Allocation]:
         allocations = []
         
         available_resources = {r.resource_id: r for r in resources if r.status == "available" and r.quantity_available > 0}
@@ -78,6 +78,11 @@ Respond with EXACTLY the need_id of the preferred location. No other text."""),
                     # Base value is urgency weight. We subtract distance to prefer closer resources.
                     # As long as distance penalty < 1000, it won't override a higher urgency category.
                     weight = urgency_w - min(dist, 999.0)
+                    
+                    # If evaluator flagged this need for revision, massively boost it
+                    if revision_notes and n.need_id in revision_notes:
+                        weight += 500000.0
+                        
                     objective_terms.append(weight * var)
                     
         prob += pulp.lpSum(objective_terms)

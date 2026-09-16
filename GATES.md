@@ -1,20 +1,25 @@
-# Gates: ILP Resource Optimization
+# Gates: Evaluator Retry Loop
 
-OWNS: backend/agents/resource_matcher.py
+OWNS: backend/agents/evaluator_agent.py, backend/agents/resource_matcher.py, backend/graph/build_graph.py
 
-Scope: Replace greedy matching with an ILP (Integer Linear Programming) optimizer using PuLP.
+Scope: Make evaluator retry loop actually pass revision_notes to matcher, boosting priority of flagged needs.
 
-- [x] G1: pulp is installed and in requirements.txt
-  CHECK: .venv\Scripts\python -c "import pulp; print('pulp found')"
-  EXPECT: pulp found
-  EVIDENCE: automatic-evidence=v1; definition-sha256=6575ed3e24104bea8a1c3c1e368d2b39b9869c9afba8d099403cf5bf9507564c; exit=0; EXPECT=matched; output-sha256=c5698bad2be85bfc24c4b52ad8b422a91036122175e07a554da92dfe936269ed; output-bytes=12; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G1: EvaluatorAgent instructs LLM to use exact need_ids in revision_notes
+  CHECK: .venv\Scripts\python -c "f = open('backend/agents/evaluator_agent.py').read(); print('found' if 'exact need_id' in f.lower() else 'missing')"
+  EXPECT: found
+  EVIDENCE: automatic-evidence=v1; definition-sha256=68c61efacfa0e1ea88ec29bca8fc2babddbc52e658cfb9656dca28d35a967faa; exit=0; EXPECT=matched; output-sha256=8c6e7678c35c6653b6589a55bc699036cf54d7b4e064018bc7a8b784ee569229; output-bytes=7; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
 
-- [x] G2: resource_matcher uses PuLP for optimization
-  CHECK: .venv\Scripts\python -c "f = open('backend/agents/resource_matcher.py').read(); print('pulp' if 'LpProblem' in f else 'missing')"
-  EXPECT: pulp
-  EVIDENCE: automatic-evidence=v1; definition-sha256=7f1d0872944dd9d418f15ed41a7c5aa695f16e768de3ea18fb75266f87850c24; exit=0; EXPECT=matched; output-sha256=cc13d31ec51c3b5c8c6a8f2fbe24f24dcc741353c49bac14b7400dd20bbda7f0; output-bytes=6; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G2: ResourceMatcher boosts urgency weight when need_id is in revision_notes
+  CHECK: .venv\Scripts\python -c "f = open('backend/agents/resource_matcher.py').read(); print('found' if 'revision_notes' in f else 'missing')"
+  EXPECT: found
+  EVIDENCE: automatic-evidence=v1; definition-sha256=885333400f404ed5d8a0706a39a7c78b9984747707b1bc12d748233c2bbff2f2; exit=0; EXPECT=matched; output-sha256=8c6e7678c35c6653b6589a55bc699036cf54d7b4e064018bc7a8b784ee569229; output-bytes=7; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
 
-- [x] G3: Allocations are tagged as 'ilp_optimal'
-  CHECK: .venv\Scripts\python -c "from backend.agents.resource_matcher import ResourceMatcher; from backend.schemas.models import VerifiedNeed, ResourceRecord, NeedType, UrgencyLevel; n1 = VerifiedNeed(need_id='n1', source_report_ids=[], location_text='Loc', coordinates=(0.0,0.0), need_type=NeedType.WATER, quantity_estimate=10, urgency=UrgencyLevel.HIGH, verification_confidence=1.0, requires_human_review=False); r1 = ResourceRecord(resource_id='r1', resource_type=NeedType.WATER, quantity_available=20, location=(0.0, 0.1), status='available'); matcher = ResourceMatcher(); alloc = matcher.process([n1], [r1]); print(alloc[0].allocation_method if alloc else 'None')"
-  EXPECT: ilp_optimal
-  EVIDENCE: automatic-evidence=v1; definition-sha256=b9b7ccad0f3349368124a65a723c74ef5776467066f8d1b39b4f79c6e215516c; exit=0; EXPECT=matched; output-sha256=2ba301c6f1415282bd6428a57a7502eeb5bb905cf5a90b08b561fb12c4596366; output-bytes=13; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+- [x] G3: build_graph.py passes revision_notes to match_agent.process
+  CHECK: .venv\Scripts\python -c "f = open('backend/graph/build_graph.py').read(); print('found' if 'revision_notes=' in f else 'missing')"
+  EXPECT: found
+  EVIDENCE: automatic-evidence=v1; definition-sha256=8d60c0d552f85aa3805dd01bc78bb2a580a793c25efb99991ee0aa96c185aab7; exit=0; EXPECT=matched; output-sha256=8c6e7678c35c6653b6589a55bc699036cf54d7b4e064018bc7a8b784ee569229; output-bytes=7; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries
+
+- [x] G4: ResourceMatcher properly elevates a revised need
+  CHECK: .venv\Scripts\python -c "from backend.agents.resource_matcher import ResourceMatcher; from backend.schemas.models import VerifiedNeed, ResourceRecord, NeedType, UrgencyLevel; n1 = VerifiedNeed(need_id='need-1', source_report_ids=[], location_text='A', coordinates=(0.0,0.0), need_type=NeedType.WATER, quantity_estimate=10, urgency=UrgencyLevel.LOW, verification_confidence=1.0, requires_human_review=False); n2 = VerifiedNeed(need_id='need-2', source_report_ids=[], location_text='B', coordinates=(0.0,0.0), need_type=NeedType.WATER, quantity_estimate=10, urgency=UrgencyLevel.LOW, verification_confidence=1.0, requires_human_review=False); r1 = ResourceRecord(resource_id='r1', resource_type=NeedType.WATER, quantity_available=10, location=(0.0, 0.0), status='available'); matcher = ResourceMatcher(); allocs = matcher.process([n1, n2], [r1], revision_notes='Prioritize need-2 immediately'); print('Boosted' if allocs[0].need_id == 'need-2' else allocs[0].need_id)"
+  EXPECT: Boosted
+  EVIDENCE: automatic-evidence=v1; definition-sha256=fac9746de2a66f2ae754bbea8f85ec6b8a8ad01eb104fba2e9e7c9c6fcc9b8d8; exit=0; EXPECT=matched; output-sha256=9e2ddd454f40a063af8cd88fb24724746be39d382b9445938eb4adbb321efe03; output-bytes=9; shell=C:\Windows\system32\cmd.exe; cwd=C:\Users\hmhar\Projects\Disaster_Coordinator; path=4c78bc975020/45 entries

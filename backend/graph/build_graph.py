@@ -47,7 +47,12 @@ def build_coordinator_graph():
         if state.get("verified_need"):
             needs.append(state["verified_need"])
             
-        allocs = match_agent.process(needs, state.get("available_resources", []))
+        revision_notes = None
+        evaluation = state.get("evaluation")
+        if evaluation and not evaluation.passed:
+            revision_notes = evaluation.revision_notes
+            
+        allocs = match_agent.process(needs, state.get("available_resources", []), revision_notes=revision_notes)
         return {"allocations": allocs}
         
     def synth_node(state: CoordinatorState):

@@ -11,7 +11,7 @@ class LLMEvaluation(BaseModel):
     fairness_score: float = Field(ge=0.0, le=1.0, description="A score from 0.0 to 1.0 assessing if resources are fairly distributed geographically.")
     passed: bool = Field(description="True if the plan is acceptable and can be released. False if it needs revision.")
     rationale: str = Field(description="Explanation of the evaluation.")
-    revision_notes: Optional[str] = Field(description="If passed is False, specific instructions to the Resource Matcher on how to fix the plan.")
+    revision_notes: Optional[str] = Field(description="If passed is False, specific instructions to the Resource Matcher on how to fix the plan. You MUST use the exact need_id for any needs you mention.")
 
 class EvaluatorAgent:
     def __init__(self):
