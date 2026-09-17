@@ -9,6 +9,7 @@ from backend.agents.verification_agent import VerificationAgent
 from backend.agents.resource_matcher import ResourceMatcher
 from backend.agents.plan_synthesizer import PlanSynthesizer
 from backend.agents.evaluator_agent import EvaluatorAgent
+from backend.utils.logger import get_audit_logger
 
 def build_coordinator_graph():
     # Instantiate agents
@@ -17,14 +18,17 @@ def build_coordinator_graph():
     match_agent = ResourceMatcher()
     synth_agent = PlanSynthesizer()
     eval_agent = EvaluatorAgent()
+    audit_logger = get_audit_logger()
     
     # Node functions
     def ingest_node(state: CoordinatorState):
         extracted = ingest_agent.process(state["raw_report"])
+        audit_logger.info("Ingestion complete", extra={"action": "ingest", "report_id": state["raw_report"].report_id})
         return {"extracted_need": extracted}
         
     def verify_node(state: CoordinatorState):
         verified = verify_agent.process(state["extracted_need"], state.get("existing_needs", []))
+        audit_logger.info("Verification complete", extra={"action": "verify", "need_id": verified.need_id})
         return {
             "verified_need": verified,
             "requires_human_review": verified.requires_human_review
@@ -53,6 +57,7 @@ def build_coordinator_graph():
             revision_notes = evaluation.revision_notes
             
         allocs = match_agent.process(needs, state.get("available_resources", []), revision_notes=revision_notes)
+        audit_logger.info("Matching complete", extra={"action": "match", "allocations_count": len(allocs)})
         return {"allocations": allocs}
         
     def synth_node(state: CoordinatorState):
@@ -75,6 +80,7 @@ def build_coordinator_graph():
             
         result = eval_agent.process(state["plan"], needs)
         new_rev_count = state.get("revision_count", 0) + 1
+        audit_logger.info("Evaluation complete", extra={"action": "evaluate", "passed": result.passed, "fairness": result.fairness_score})
         return {
             "evaluation": result,
             "revision_count": new_rev_count

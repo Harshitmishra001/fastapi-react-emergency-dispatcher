@@ -1,0 +1,33 @@
+[
+  {
+    "report_id": "synth-001",
+    "source_channel": "sms",
+    "submitted_at": "2026-09-17T12:05:00Z",
+    "raw_text": "Building collapsed at 1200 Westheimer Rd. We have about 10 people trapped. Need rescue teams urgently!",
+    "reporter_contact": "+15551234567"
+  },
+  {
+    "report_id": "synth-002",
+    "source_channel": "twitter",
+    "submitted_at": "2026-09-17T12:07:00Z",
+    "raw_text": "Water lines are down in the whole neighborhood near Memorial Park. Hundreds of people without clean water. Please help."
+  },
+  {
+    "report_id": "synth-003",
+    "source_channel": "web_form",
+    "submitted_at": "2026-09-17T12:12:00Z",
+    "raw_text": "Fire spreading rapidly near the chemical plant on Hwy 225. We need fire trucks, and masks for the smoke."
+  },
+  {
+    "report_id": "synth-004",
+    "source_channel": "sms",
+    "submitted_at": "2026-09-17T12:15:00Z",
+    "raw_text": "Send blankets to the makeshift shelter at the high school. It's freezing and we have 50 elderly folks here."
+  },
+  {
+    "report_id": "synth-005",
+    "source_channel": "social_media",
+    "submitted_at": "2026-09-17T12:20:00Z",
+    "raw_text": "Road washed out on I-45 North. A bus is stuck with 30 passengers. Need medical supplies, some are injured."
+  }
+]
