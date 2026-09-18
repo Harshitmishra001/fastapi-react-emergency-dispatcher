@@ -2,7 +2,7 @@ import pytest
 from backend.schemas.models import VerifiedNeed, ResourceRecord, NeedType, UrgencyLevel
 from backend.agents.resource_matcher import ResourceMatcher
 
-def test_greedy_resource_matcher():
+def test_resource_matcher_urgency_priority():
     agent = ResourceMatcher()
     
     # 2 needs
@@ -44,7 +44,7 @@ def test_greedy_resource_matcher():
     
     allocations = agent.process(needs, resources)
     
-    # n2 is CRITICAL, so it should be processed FIRST in greedy solver
+    # n2 is CRITICAL, so it should be prioritized by the ILP objective
     # even though n1 is closer to the resource.
     
     assert len(allocations) == 2
@@ -54,4 +54,4 @@ def test_greedy_resource_matcher():
     
     assert n2_alloc.quantity_allocated == 100 # n2 gets full amount
     assert n1_alloc.quantity_allocated == 50  # n1 gets whatever is left
-    assert n1_alloc.allocation_method == "greedy_fallback"
+    assert n1_alloc.allocation_method == "ilp_optimal"

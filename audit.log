@@ -1,2 +1,14 @@
 {"timestamp": "2026-09-17T09:42:23.675018+00:00", "level": "INFO", "name": "test", "message": "Test event", "user_id": 123}
 {"timestamp": "2026-09-17T09:43:32.982459+00:00", "level": "INFO", "name": "test", "message": "Test event", "user_id": 123}
+{"timestamp": "2026-09-18T05:12:08.151345+00:00", "level": "INFO", "name": "disaster_audit", "message": "Ingestion complete", "report_id": "rpt-int-1", "action": "ingest"}
+{"timestamp": "2026-09-18T05:12:08.153369+00:00", "level": "INFO", "name": "disaster_audit", "message": "Verification complete", "need_id": "need-1", "action": "verify"}
+{"timestamp": "2026-09-18T05:12:08.156300+00:00", "level": "INFO", "name": "disaster_audit", "message": "Matching complete", "action": "match"}
+{"timestamp": "2026-09-18T05:12:08.163585+00:00", "level": "INFO", "name": "disaster_audit", "message": "Evaluation complete", "action": "evaluate"}
+{"timestamp": "2026-09-18T05:12:08.163585+00:00", "level": "INFO", "name": "disaster_audit", "message": "Matching complete", "action": "match"}
+{"timestamp": "2026-09-18T05:12:08.167591+00:00", "level": "INFO", "name": "disaster_audit", "message": "Evaluation complete", "action": "evaluate"}
+{"timestamp": "2026-09-18T05:12:08.204822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Ingestion complete", "report_id": "rpt-int-2", "action": "ingest"}
+{"timestamp": "2026-09-18T05:12:08.205822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Verification complete", "need_id": "need-2", "action": "verify"}
+{"timestamp": "2026-09-18T05:12:08.206822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Matching complete", "action": "match"}
+{"timestamp": "2026-09-18T05:12:08.213822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Evaluation complete", "action": "evaluate"}
+{"timestamp": "2026-09-18T05:12:08.214822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Matching complete", "action": "match"}
+{"timestamp": "2026-09-18T05:12:08.219822+00:00", "level": "INFO", "name": "disaster_audit", "message": "Evaluation complete", "action": "evaluate"}
