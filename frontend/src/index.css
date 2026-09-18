@@ -1,14 +1,23 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
-@layer base {
-  body {
-    @apply bg-gray-950 text-gray-100 antialiased selection:bg-blue-500/30;
-  }
+
+@theme {
+  --color-bg-base: #18181b;
+  --color-bg-surface: #1e1e22;
+  --color-bg-elevated: #27272a;
+  --color-border-subtle: #2e2e33;
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #71717a;
+  --color-text-muted: #52525b;
+  --color-accent: #3b82f6;
+  --color-critical: #ef4444;
+  --color-high: #f59e0b;
+  --color-success: #22c55e;
 }
 
-/* Custom animations for the map */
-@keyframes dash {
-  to {
-    stroke-dashoffset: -10;
+@layer base {
+  body {
+    @apply bg-bg-base text-text-primary antialiased selection:bg-accent/30 font-sans;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }

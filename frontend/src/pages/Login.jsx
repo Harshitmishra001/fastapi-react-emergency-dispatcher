@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
 import client from '../api/client';
 
 export default function Login() {
@@ -34,52 +33,58 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-800 p-8 rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex justify-center mb-6">
-          <div className="bg-blue-600 p-3 rounded-xl">
-            <LogIn className="w-8 h-8 text-white" />
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-center text-white mb-8">Responder Login</h2>
+    <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm flex flex-col gap-6">
         
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg mb-6 text-sm">
-            {error}
-          </div>
-        )}
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-sm font-semibold tracking-widest text-text-primary uppercase">
+            Disaster Coordinator
+          </h1>
+          <span className="text-xs text-text-muted tracking-wider uppercase">System Access</span>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 mt-4"
-          >
-            {loading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
-        <div className="mt-6 text-center text-gray-500 text-sm">
-          <p>Demo: alice / reviewer_pass</p>
+        <div className="bg-bg-surface border border-border-subtle p-6 rounded-[2px] shadow-2xl">
+          {error && (
+            <div className="text-critical text-xs mb-4 text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Operator ID</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full bg-bg-elevated border border-border-subtle rounded-[2px] px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+                required
+              />
+            </div>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Passcode</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-bg-elevated border border-border-subtle rounded-[2px] px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent transition-colors"
+                required
+              />
+            </div>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-accent hover:bg-blue-400 text-white text-xs font-semibold uppercase tracking-wider py-2.5 mt-2 rounded-[2px] transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Authenticating...' : 'Initialize Session'}
+            </button>
+          </form>
+        </div>
+
+        <div className="text-center text-[10px] text-text-muted uppercase tracking-widest">
+          Demo: alice / reviewer_pass
         </div>
       </div>
     </div>

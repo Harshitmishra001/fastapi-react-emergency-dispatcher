@@ -238,6 +238,9 @@ async def get_review_queue(
             "urgency": r.urgency,
             "verification_confidence": r.verification_confidence,
             "source_report_ids": json.loads(r.source_report_ids) if r.source_report_ids else [],
+            "lat": r.lat,
+            "lon": r.lon,
+            "quantity_estimate": r.quantity_estimate
         }
         for r in rows
     ]}
@@ -299,7 +302,8 @@ async def get_resources(
             "resource_id": r.resource_id,
             "resource_type": r.resource_type,
             "quantity_available": r.quantity_available,
-            "location": [r.lat, r.lon],
+            "lat": r.lat,
+            "lon": r.lon,
             "status": r.status,
         }
         for r in rows
