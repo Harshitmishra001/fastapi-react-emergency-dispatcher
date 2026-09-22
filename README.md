@@ -4,6 +4,10 @@ A multi-agent AI system that triages emergency reports, matches resources, and g
 
 This project aims to automate emergency resource dispatching by converting chaotic, unstructured disaster reports into verified, mathematically matched deployment plans, while maintaining a strict "Human-in-the-Loop" checkpoint for safety and oversight.
 
+## New Dispatch Workstation UI
+
+The frontend has been completely redesigned into a professional, restrained Emergency Operations Workstation. It features a tactical map workspace (70% screen width), a tight high-contrast review queue, and clean system telemetry, moving away from AI dashboard tropes towards functional dispatching.
+
 ## High-Level System Architecture
 
 The system employs a decoupled architecture consisting of a React frontend, a FastAPI backend, and an asynchronous LangGraph-powered AI pipeline.
@@ -217,3 +221,5 @@ Acts as an internal critic. Scores the plan.
    npm run dev
    ```
    *The Dashboard will be available at `http://localhost:5173`*
+
+
