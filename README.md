@@ -8,6 +8,24 @@ This project aims to automate emergency resource dispatching by converting chaot
 
 The frontend has been completely redesigned into a professional, restrained Emergency Operations Workstation. It features a tactical map workspace (70% screen width), a tight high-contrast review queue, and clean system telemetry, moving away from AI dashboard tropes towards functional dispatching.
 
+
+## Project Status
+
+**Current Phase:** Entering Phase D (Professional Grade)
+
+The following phases have been successfully completed:
+- ✅ **Phase A (Core Fixes)**: Resolved all critical backend bugs, secured the auth system with JWT and bcrypt, and made the LangGraph pipeline functional.
+- ✅ **Phase B (Frontend Redesign)**: Replaced the basic dashboard with a professional, restrained Emergency Operations Workstation featuring a 70% screen-width tactical map and high-contrast review queue.
+- ✅ **Phase C (AI Engine & Geocoding)**: Upgraded the resource matcher to use an Integer Linear Programming (ILP) optimizer (`pulp`), added actual geocoding (`geopy`), implemented persistent vector deduplication (`Qdrant`), and added an adversarial test suite.
+- ✅ **CI/CD Pipeline**: Added GitHub Actions to automatically run `pytest` and `vite build` on every push.
+
+**Remaining Tasks (Phase D):**
+- [ ] **Celery + Redis**: Background task workers for heavy LLM operations
+- [ ] **WebSockets**: Real-time live updates for the frontend
+- [ ] **Docker & PostgreSQL**: Containerize and upgrade DB for production scaling
+- [ ] **Prometheus Metrics**: Expose telemetry for Grafana dashboarding
+- [ ] **Data Security**: Encrypt PII at rest
+
 ## High-Level System Architecture
 
 The system employs a decoupled architecture consisting of a React frontend, a FastAPI backend, and an asynchronous LangGraph-powered AI pipeline.
